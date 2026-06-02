@@ -15,11 +15,14 @@ export AbstractField,
        FieldSym,
        Fill,
        FieldZero,
+       FieldCall,
        @field,
        AbstractStencil,
-       FieldOne
+       StencilOne
 
 include("fields.jl")
 include("stencils.jl")
+include("operators.jl")
+include("display.jl")
 
 end # module

@@ -10,8 +10,8 @@ Base.eltype(::Type{<:AbstractStencil{T}}) where {T} = T
 Base.eltype(st::AbstractStencil) = eltype(typeof(st))
 
 """
-    FieldOne{T}()
-    FieldOne(U::Type) / FieldOne(x)
+    StencilOne{T}()
+    StencilOne(U::Type) / StencilOne(x)
 
 Type-level multiplicative identity for [`AbstractField`](@ref): the
 pointwise-side analogue of scalar-side [`ScalarOne`](@ref), now reified as a
@@ -25,25 +25,28 @@ recovered at materialize time via `one(U)`.
 
 The outer constructors map any concrete value-space type `U` to its bool-
 shape `T = _to_bool_shape(_unity_space(U))`, so
-`FieldOne(Float64) === FieldOne{Bool, Float64}()` and
-`eltype(FieldOne(Float64)) === Bool`. Materializes to `one(U)` —
+`StencilOne(Float64) === StencilOne{Bool, Float64}()` and
+`eltype(StencilOne(Float64)) === Bool`. Materializes to `one(U)` —
 e.g. `1.0` for `U = Float64`.
 
 See also [`FieldZero`](@ref) for the additive identity.
 """
-struct FieldOne{T} <: AbstractStencil{T}
+struct StencilOne{T} <: AbstractStencil{T}
 
-    function FieldOne{T}() where {T}
-        _assert_bool_shape(:FieldOne, T)
+    function StencilOne{T}() where {T}
+        _assert_bool_shape(:StencilOne, T)
         applicable(one, T) || throw(ArgumentError(
-            "FieldOne{T} requires `one(T)` to be defined (a " *
+            "StencilOne{T} requires `one(T)` to be defined (a " *
             "square-scalar shape); got T=$T"))
         new{T}()
     end
 end
 
-FieldOne(::Type{U}) where {U} =
-       FieldOne{_to_bool_shape(_unity_space(U))}()
-FieldOne(::U) where {U} = FieldOne(U)
+StencilOne(::Type{U}) where {U} =
+       StencilOne{_to_bool_shape(_unity_space(U))}()
+StencilOne(::U) where {U} = StencilOne(U)
 
-LinearAlgebra.diag(::FieldOne{T}) where {T} = Fill(ScalarOne(T))
+LinearAlgebra.diag(::StencilOne{T}) where {T} = Fill(ScalarOne(T))
+
+# for now
+ScalarAlgebra.simplify(st::AbstractStencil) = st

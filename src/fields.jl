@@ -84,3 +84,34 @@ const FieldZero{T} = Fill{T, ScalarZero{T}}
 
 FieldZero(T::Type)       = Fill(ScalarZero(T))
 FieldZero(::T) where {T} = Fill(ScalarZero(T))
+
+"""
+    FieldCall(fn, args::Tuple{Vararg{AbstractField}})
+
+Internal node applying `fn` to `args` component-wise. The element type `T =
+Base.promote_op(fn, eltype.(args)...)` is computed **at construction**; a
+`Union{}` result (e.g. genuine `SVector` inhomogeneity) is an unconstructable
+term and throws.
+"""
+struct FieldCall{F, A<:Tuple{Vararg{AbstractField}}, T} <: AbstractField{T}
+    fn::F
+    args::A
+
+    FieldCall{F, A, T}(fn::F, args::A) where {F, A<:Tuple{Vararg{AbstractField}}, T} =
+        new{F, A, T}(fn, args)
+end
+
+function FieldCall(fn::F, args::A) where {F, A<:Tuple{Vararg{AbstractField}}}
+    T = Base.promote_op(fn, map(eltype, args)...)
+    T === Union{} && throw(ArgumentError(
+        "unconstructable FieldCall: $(fn) over eltypes $(map(eltype, args)) has no " *
+        "result type (Base.promote_op returned Union{})"))
+    FieldCall{F, A, T}(fn, args)
+end
+
+asfield(fd::AbstractField) = fd
+asfield(sc::AbstractScalar) = Fill(sc)
+asfield(x) = Fill(ScalarConst(x))
+
+# for now
+ScalarAlgebra.simplify(fd::AbstractField) = fd
