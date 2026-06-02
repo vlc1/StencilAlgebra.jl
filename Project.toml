@@ -3,6 +3,9 @@ uuid = "ca087e3a-ae0c-4219-a641-d468d695aa24"
 version = "0.1.0"
 authors = ["Vincent Le Chenadec <vincentlechenadec@gmail.com>"]
 
+[deps]
+ScalarAlgebra = "60794e7d-98f0-4a77-a4fa-730d5cb83166"
+
 [compat]
 julia = "1.0"
 
