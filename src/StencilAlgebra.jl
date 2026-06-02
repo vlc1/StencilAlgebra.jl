@@ -1,0 +1,3 @@
+module StencilAlgebra
+
+end # module
