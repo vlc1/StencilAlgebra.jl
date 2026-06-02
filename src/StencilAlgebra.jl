@@ -11,7 +11,11 @@ using ScalarAlgebra: _assert_concrete,
 #                     _value_space,
                      asscalar
 
-export AbstractField,
+export Offset,
+       Shift,
+       dim, pos,
+       ô, ê₁, ê₂, ê₃, ê₄, ê₅, ê₆, ê₇, ê₈, ê₉,
+       AbstractField,
        FieldSym,
        Fill,
        FieldZero,
@@ -20,6 +24,7 @@ export AbstractField,
        AbstractStencil,
        StencilOne
 
+include("static.jl")
 include("fields.jl")
 include("stencils.jl")
 include("operators.jl")

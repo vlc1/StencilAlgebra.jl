@@ -7,7 +7,7 @@ _show(io::IO, ::FieldZero) = print(io, "O")
 _show(io::IO, f::Fill) = show(io, f.val)
 
 function _show(io::IO, t::FieldCall)
-    op, args = _callsym(t.fn), t.args
+    op, args = nameof(t.fn), t.args
     if length(args) == 2 && op in _INFIX
         print(io, '(')
         _show(io, args[1])
@@ -29,4 +29,4 @@ end
 
 Base.show(io::IO, t::AbstractStencil) = _show(io, simplify(t))
 
-_show(io::IO, ::StencilOne)   = print(io, 'I')
+_show(io::IO, ::StencilOne) = print(io, 'I')

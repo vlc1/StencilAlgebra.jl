@@ -223,4 +223,101 @@ using Test
         @test bc_triple isa FieldCall
     end
 
+    @testset "Offset" begin
+        o1 = Offset{1, 2}()
+        @test dim(o1) === 1
+        @test pos(o1) === 2
+        @test o1 isa Offset{1, 2}
+
+        o2 = Offset{3, -5}()
+        @test dim(o2) === 3
+        @test pos(o2) === -5
+
+        # Zero magnitude is rejected
+        @test_throws ArgumentError Offset{1, 0}()
+
+        # Negation
+        o_neg = @inferred -(Offset{2, 3}())
+        @test dim(o_neg) === 2
+        @test pos(o_neg) === -3
+
+        # Scalar multiplication
+        o_scaled = 2 * Offset{1, 3}()
+        @test dim(o_scaled) === 1
+        @test pos(o_scaled) === 6
+
+        o_scaled2 = Offset{2, -2}() * 3
+        @test dim(o_scaled2) === 2
+        @test pos(o_scaled2) === -6
+    end
+
+    @testset "Shift" begin
+        # Zero shift (identity)
+        shift_id = @inferred Shift(())
+        @test shift_id isa Shift{Tuple{}}
+        @test @inferred iszero(shift_id)
+
+        # Basis symbols
+        @test ô isa Shift{Tuple{}}
+        @test @inferred iszero(ô)
+
+        # Unit shifts
+        @test ê₁ isa Shift
+        @test !iszero(ê₁)
+
+        @test ê₂ isa Shift
+        @test ê₃ isa Shift
+
+        # Addition of shifts
+        s1 = @inferred (ê₁ + ê₂)
+        @test !iszero(s1)
+        @test length(s1.offsets) === 2
+
+        # Same-dimension offsets combine (normalization)
+        s2 = ê₁ + 2ê₁
+        @test length(s2.offsets) === 1
+        # Should have magnitude 3
+        o = first(s2.offsets)
+        @test pos(o) === 3
+
+        # Zero offset is dropped
+        s_zero = @inferred (ê₁ - ê₁)
+        @test iszero(s_zero)
+
+        # Negation
+        s_neg = @inferred (-ê₁)
+        @test length(s_neg.offsets) === 1
+        o_neg = first(s_neg.offsets)
+        @test pos(o_neg) === -1
+
+        # Subtraction
+        s_sub = @inferred (ê₂ - ê₁)
+        @test !iszero(s_sub)
+
+        # Scalar multiplication
+        s_scaled = 2 * ê₁
+        @test length(s_scaled.offsets) === 1
+        o_s = first(s_scaled.offsets)
+        @test pos(o_s) === 2
+
+        s_scaled2 = ê₂ * 3
+        @test length(s_scaled2.offsets) === 1
+        o_s2 = first(s_scaled2.offsets)
+        @test pos(o_s2) === 3
+
+        # Dimension sorting
+        s_sorted = ê₃ + ê₁ + ê₂
+        @test length(s_sorted.offsets) === 3
+        @test dim(s_sorted.offsets[1]) === 1
+        @test dim(s_sorted.offsets[2]) === 2
+        @test dim(s_sorted.offsets[3]) === 3
+
+        # Complex expressions
+        s_complex = 3ê₁ + 2ê₂ - ê₃
+        @test length(s_complex.offsets) === 3
+        @test pos(s_complex.offsets[1]) === 3
+        @test pos(s_complex.offsets[2]) === 2
+        @test pos(s_complex.offsets[3]) === -1
+    end
+
 end
