@@ -109,6 +109,38 @@ function FieldCall(fn::F, args::A) where {F, A<:Tuple{Vararg{AbstractField}}}
     FieldCall{F, A, T}(fn, args)
 end
 
+"""
+    Shifted(shift::Shift, term::AbstractField)
+
+A `term` read at the lattice `shift`. The element type is unchanged
+(`eltype(term)`); the zero shift `ô` is the identity (returns `term`).
+"""
+struct Shifted{S<:Shift, T, U<:AbstractField{T}} <: AbstractField{T}
+    shift::S
+    term::U
+
+    Shifted{S, T, U}(shift::S, term::U) where {S, T, U<:AbstractField{T}} =
+        new{S, T, U}(shift, term)
+end
+
+Base.parent(this::Shifted) = this.term
+
+# Zero shift with spatially invariant term
+Shifted(::Shift{Tuple{}}, term::Union{Fill, FieldZero}) = term
+
+# Zero shift is always identity
+Shifted(::Shift{Tuple{}}, term::AbstractField) = term
+
+# Spatially invariant terms return unchanged
+Shifted(::Shift, term::Union{Fill, FieldZero}) = term
+
+# Shifting a Shifted combines shifts
+Shifted(shift::Shift, term::Shifted) = Shifted(shift + term.shift, parent(term))
+
+# General case
+Shifted(shift::Shift, term::AbstractField{T}) where {T} =
+    Shifted{typeof(shift), T, typeof(term)}(shift, term)
+
 asfield(fd::AbstractField) = fd
 asfield(sc::AbstractScalar) = Fill(sc)
 asfield(x) = Fill(ScalarConst(x))

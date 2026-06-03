@@ -25,6 +25,9 @@ Base.:^(t::AbstractField, c) = FieldCall(^, (t, asfield(c)))
 Base.:^(::AbstractField, ::AbstractField) = throw(ArgumentError(
     "Use `a .^ b` instead of `a ^ b` for field exponentiation."))
 
+# indexing-as-shift sugar
+Base.getindex(term::AbstractField, shift::Shift) = Shifted(shift, term)
+
 # broadcasting
 struct FieldStyle <: Base.Broadcast.BroadcastStyle end
 

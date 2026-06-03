@@ -20,6 +20,7 @@ export Offset,
        Fill,
        FieldZero,
        FieldCall,
+       Shifted,
        @field,
        AbstractStencil,
        StencilOne

@@ -2,9 +2,14 @@ const _INFIX = (:+, :-, :*, :/, :\, :^)
 
 Base.show(io::IO, t::AbstractField) = _show(io, simplify(t))
 
-_show(io::IO, ::FieldSym{S}) where {S} = print(io, S, "[]")
+_show(io::IO, ::FieldSym{S}) where {S} = print(io, S)
 _show(io::IO, ::FieldZero) = print(io, "O")
 _show(io::IO, f::Fill) = show(io, f.val)
+
+function _show(io::IO, s::Shifted)
+    _show(io, s.term)
+    print(io, '[', s.shift, ']')
+end
 
 function _show(io::IO, t::FieldCall)
     op, args = nameof(t.fn), t.args

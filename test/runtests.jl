@@ -320,4 +320,152 @@ using Test
         @test pos(s_complex.offsets[3]) === -1
     end
 
+    @testset "Shifted" begin
+        @field u
+        @field v Float32
+        @field w
+
+        # Zero shift is identity
+        result_id = @inferred Shifted(ô, u)
+        @test result_id === u
+        @test result_id isa AbstractField{Float64}
+
+        # Non-zero shift creates Shifted node
+        s1 = @inferred Shifted(ê₁, u)
+        @test s1 isa Shifted
+        @test s1 isa AbstractField{Float64}
+        @test eltype(s1) === Float64
+
+        # Shift field accessor
+        @test s1.shift === ê₁
+        @test s1.term === u
+
+        # Multiple offset shift
+        s_multi = @inferred Shifted(ê₁ + ê₂, u)
+        @test s_multi isa Shifted
+        @test !iszero(s_multi.shift)
+        @test length(s_multi.shift.offsets) === 2
+
+        # Element type preservation
+        s_v32 = @inferred Shifted(ê₁, v)
+        @test eltype(s_v32) === Float32
+        @test s_v32.term === v
+
+        # Nested shifted (flattened by simplification rule)
+        s_nested = @inferred Shifted(ê₂, Shifted(ê₁, u))
+        @test s_nested isa Shifted
+        @test eltype(s_nested) === Float64
+        @test s_nested.shift === (ê₂ + ê₁)
+        @test s_nested.term === u
+
+        # Shifted of FieldCall
+        u_plus_v = u + v
+        s_call = @inferred Shifted(ê₃, u_plus_v)
+        @test s_call isa Shifted
+        @test s_call.term isa FieldCall
+        @test eltype(s_call) === Float64
+
+        # Shifted with negative offset
+        s_neg = @inferred Shifted(-ê₁, u)
+        @test s_neg isa Shifted
+        @test !iszero(s_neg.shift)
+
+        # Shifted with complex shift
+        s_complex = @inferred Shifted(3ê₁ + 2ê₂, w)
+        @test s_complex isa Shifted
+        @test length(s_complex.shift.offsets) === 2
+        @test eltype(s_complex) === Float64
+
+        # Zero shift with different field types
+        s_zero_sym = Shifted(ô, u)
+        @test s_zero_sym === u
+
+        s_zero_fill = Shifted(ô, Fill(2.0))
+        @test s_zero_fill isa Fill
+
+        s_zero_call = Shifted(ô, u + v)
+        @test s_zero_call isa FieldCall
+    end
+
+    @testset "Indexing-as-shift sugar" begin
+        @field u
+        @field v Float32
+
+        # u[shift] syntax
+        s1 = @inferred u[ê₁]
+        @test s1 isa Shifted
+        @test eltype(s1) === Float64
+        @test s1 === Shifted(ê₁, u)
+
+        # Complex shift
+        s_multi = @inferred u[3ê₁ + 2ê₂]
+        @test s_multi isa Shifted
+        @test s_multi === Shifted(3ê₁ + 2ê₂, u)
+
+        # Zero shift (identity)
+        s_zero = @inferred u[ô]
+        @test s_zero === u
+
+        # Negative offset
+        s_neg = @inferred u[-ê₁]
+        @test s_neg isa Shifted
+        @test !iszero(s_neg.shift)
+
+        # Different field types
+        s_v32 = @inferred v[ê₂]
+        @test eltype(s_v32) === Float32
+
+        # Chained shifts: u[ê₁][ê₂] = u[ê₁ + ê₂]
+        s_chained = u[ê₁][ê₂]
+        s_combined = u[ê₁ + ê₂]
+        @test s_chained.shift === s_combined.shift
+    end
+
+    @testset "Shifted simplification rules" begin
+        @field u
+        @field v Float32
+
+        # Rule 1: Fill is spatially invariant (any shift = identity)
+        fill = Fill(2.0)
+        @test @inferred Shifted(ê₁, fill) === fill
+        @test @inferred Shifted(ê₂, fill) === fill
+        @test @inferred Shifted(3ê₁ + 2ê₂, fill) === fill
+
+        # Rule 2: FieldZero is spatially invariant (any shift = identity)
+        fz = FieldZero(Float64)
+        @test @inferred Shifted(ê₁, fz) === fz
+        @test @inferred Shifted(ê₂, fz) === fz
+        @test @inferred Shifted(3ê₁ + 2ê₂, fz) === fz
+
+        # Rule 3: Shifting a Shifted combines shifts
+        s_nested = @inferred Shifted(ê₂, Shifted(ê₁, u))
+        @test s_nested isa Shifted
+        @test s_nested.shift === (ê₂ + ê₁)
+        @test s_nested.term === u
+
+        # Deep nesting: Shifted(s3, Shifted(s2, Shifted(s1, u)))
+        s1 = Shifted(ê₁, u)
+        s2 = Shifted(ê₂, s1)
+        s3 = Shifted(ê₃, s2)
+        @test s3.shift === (ê₃ + ê₂ + ê₁)
+        @test s3.term === u
+
+        # Combining with complex shifts
+        s_complex = Shifted(3ê₁ - ê₂, Shifted(ê₂ + 2ê₃, u))
+        @test s_complex.shift === (3ê₁ - ê₂ + ê₂ + 2ê₃)
+        @test s_complex.term === u
+    end
+
+    @testset "Base.parent for Shifted" begin
+        @field u
+
+        s = Shifted(ê₁, u)
+        @test parent(s) === u
+        @test parent(s) === s.term
+
+        # Nested: parent unwraps one level
+        s_nested = Shifted(ê₂, Shifted(ê₁, u))
+        @test parent(s_nested) === u
+    end
+
 end
