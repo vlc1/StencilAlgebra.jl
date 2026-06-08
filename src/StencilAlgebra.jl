@@ -2,7 +2,11 @@ module StencilAlgebra
 
 using LinearAlgebra,
       StaticArrays,
-      ScalarAlgebra
+      ScalarAlgebra,
+      AlgebraCore
+
+# The algebra verbs are owned by AlgebraCore; StencilAlgebra extends them.
+import AlgebraCore: simplify
 
 using ScalarAlgebra: _assert_concrete,
                      _assert_bool_shape,

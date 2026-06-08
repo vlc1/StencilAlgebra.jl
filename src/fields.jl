@@ -146,4 +146,4 @@ asfield(sc::AbstractScalar) = Fill(sc)
 asfield(x) = Fill(ScalarConst(x))
 
 # for now
-ScalarAlgebra.simplify(fd::AbstractField) = fd
+simplify(fd::AbstractField) = fd

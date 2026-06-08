@@ -49,4 +49,4 @@ StencilOne(::U) where {U} = StencilOne(U)
 LinearAlgebra.diag(::StencilOne{T}) where {T} = Fill(ScalarOne(T))
 
 # for now
-ScalarAlgebra.simplify(st::AbstractStencil) = st
+simplify(st::AbstractStencil) = st
